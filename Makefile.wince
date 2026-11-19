@@ -8,7 +8,7 @@ SUBDIRS = . ai ai/* autogen common endgame extract graphics intro pause siflib s
 INCFLAGS = $(addprefix -I,$(wildcard $(SUBDIRS)))
 
 CXXFLAGS = -O2 -march=armv5te -D_320X240 \
-           $(INCFLAGS) $(SDL_CFLAGS) -include wince_shim.h
+           $(INCFLAGS) -Iwince_compat $(SDL_CFLAGS) -include wince_shim.h
 
 LDFLAGS = -Wl,--subsystem,windowsce:6.00 \
           $(SDL_LIBS) -lcommctrl -lwinmm -lcoredll
