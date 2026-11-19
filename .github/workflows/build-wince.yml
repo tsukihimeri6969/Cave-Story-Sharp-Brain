@@ -21,14 +21,16 @@ jobs:
           curl -L -o SDL-1.2.15.tar.gz https://www.libsdl.org/release/SDL-1.2.15.tar.gz
           tar xzf SDL-1.2.15.tar.gz
           cd SDL-1.2.15
-          python3 -c '
-          p = "src/video/wincommon/SDL_sysevents.c"
-          s = open(p).read()
-          s = s.replace("GapiTransform(", "#ifdef SDL_VIDEO_DRIVER_GAPI\n      GapiTransform(")
-          s = s.replace("hiresFix, &x, &y);", "hiresFix, &x, &y);\n#endif")
-          s = s.replace("GetMenu(hwnd)", "NULL")
-          open(p, "w").write(s)
-          '
+          python3 -c "
+          import re
+          p = 'src/video/wincommon/SDL_sysevents.c'
+          s = open(p, encoding='utf-8', errors='ignore').read()
+          s = re.sub(r'if\s*\(\s*SDL_VideoSurface\s*\)\s*GapiTransform\s*\([^;]*\);', '#ifdef SDL_VIDEO_DRIVER_GAPI\nif (SDL_VideoSurface) GapiTransform(this->hidden->userOrientation, this->hidden->hiresFix, &x, &y);\n#endif', s, flags=re.DOTALL)
+          s = s.replace('GetMenu(hwnd)', 'NULL')
+          s = s.replace('GetModuleHandle(\"USER32.DLL\")', 'GetModuleHandleW(L\"USER32.DLL\")')
+          s = s.replace('GetProcAddress(handle, \"TrackMouseEvent\")', 'GetProcAddressW(handle, L\"TrackMouseEvent\")')
+          open(p, 'w', encoding='utf-8').write(s)
+          "
           ./configure --host=arm-mingw32ce \
             --prefix=/opt/cegcc/arm-mingw32ce \
             --enable-static --disable-shared \
