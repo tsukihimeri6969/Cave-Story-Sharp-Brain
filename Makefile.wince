@@ -1,0 +1,31 @@
+CXX = arm-mingw32ce-g++
+STRIP = arm-mingw32ce-strip
+
+SDL_CFLAGS = $(shell /opt/cegcc/arm-mingw32ce/bin/sdl-config --cflags)
+SDL_LIBS = $(shell /opt/cegcc/arm-mingw32ce/bin/sdl-config --static-libs)
+
+SUBDIRS = . ai ai/* autogen common endgame extract graphics intro pause siflib sound TextBox
+INCFLAGS = $(addprefix -I,$(wildcard $(SUBDIRS)))
+
+CXXFLAGS = -O2 -march=armv5te -D_320X240 \
+           $(INCFLAGS) $(SDL_CFLAGS) -include wince_shim.h
+
+LDFLAGS = -Wl,--subsystem,windowsce:6.00 \
+          $(SDL_LIBS) -lcommctrl -lwinmm -lcoredll
+
+SRCS = $(sort $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.cpp)))
+OBJS = $(SRCS:.cpp=.o)
+
+TARGET = AppMain.exe
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
+	$(STRIP) $@
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)

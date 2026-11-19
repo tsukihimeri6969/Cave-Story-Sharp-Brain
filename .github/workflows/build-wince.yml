@@ -1,0 +1,39 @@
+name: Build Sharp Brain WinCE Binary
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CeGCC ARM Toolchain
+        run: |
+          curl -L -o /tmp/cegcc.zip https://github.com/brain-hackers/cegcc-build/releases/download/2022-04-11-133546/cegcc-2022-04-11-133546.zip
+          sudo unzip -q /tmp/cegcc.zip -d /opt
+          echo "/opt/cegcc/bin" >> $GITHUB_PATH
+
+      - name: Build Static SDL 1.2.15 for WinCE
+        run: |
+          cd /tmp
+          curl -L -o SDL-1.2.15.tar.gz https://www.libsdl.org/release/SDL-1.2.15.tar.gz
+          tar xzf SDL-1.2.15.tar.gz
+          cd SDL-1.2.15
+          ./configure --host=arm-mingw32ce \
+            --prefix=/opt/cegcc/arm-mingw32ce \
+            --enable-static --disable-shared \
+            --disable-cdrom --disable-joystick --disable-stdio-redirect
+          make -j$(nproc) && sudo make install
+
+      - name: Compile AppMain.exe
+        run: |
+          make -f Makefile.wince -j$(nproc)
+          file AppMain.exe
+
+      - name: Upload AppMain.exe Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SharpBrain-CaveStory
+          path: AppMain.exe
